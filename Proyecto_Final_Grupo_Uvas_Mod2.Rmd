@@ -1,0 +1,526 @@
+---
+title: "Proyecto Final (Diseño Experimental)"
+author: "Elaborado por: Andreina Vásquez Castro B27084, Josué Javier Solís Salazar C17703, Emanuel Milian Chang C14779"
+date: "Fecha de ultima modificación `r Sys.Date()`"
+output:
+ prettydoc::html_pretty:
+    theme: cayman
+    highlight: github
+    math: katex
+    toc: true
+    collapsed: false
+    smooth_scroll: false
+    number_sections: true
+    fig_width: 7
+    fig_height: 6
+    fig_caption: true
+toc-title: "Tabla de Contenido"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+- Librerías utilizadas:
+
+```{r echo=TRUE, results='hide', message=FALSE, warning=FALSE}
+library("psych")
+library("tidyverse")
+library("gmodels")
+library("corrplot")
+library("PerformanceAnalytics")
+library("kableExtra")
+library("tidyr")
+library("kableExtra")
+library("stats")
+library("car")
+library("lattice")
+library("dplyr")
+library("GGally")
+```
+
+# Introducción
+
+<div align="justify">
+Una correcta producción del fruto de uva para la elaboración de vino, según Meier de INTA Concordia (2023), depende de varios factores a tomar en consideración para definir el momento óptimo de cosechar las vides.
+</div>
+# Desarrollo
+<div align="justify">
+En primera instancia, uno de los factores es el contenido de azúcar que lleva el jugo de la uva, dicha concentración se mide con base en un índice refractométrico llamado grados Brix, según Meier (2023), para una correcta cosecha de uva blanca se recomienda que ronden los 19 a 20 grados Brix, además, para la uva tinta es recomendable es que se llegue a 23,5-24 grados Brix. De esta forma se consigue un vino de calidad con contenido alcohólico óptimo. Según la Food and Agriculture Organization (FAO)(2007), una muestra de uva de mesa con una maduración satisfactoria deberá haber alcanzado un índice refractométrico de, como mínimo, 16 grados Brix.
+
+Otras condiciones que afectan la acumulación de azúcar, aparte de la especie, son las condiciones climáticas, características específicas del terreno y el tamaño de las bayas. Según Berli et al.(2009) el ácido abcísico es una fitohormona asociada a la respuesta de las plantas frente al estrés que producen condiciones abióticas como sequía, altas temperaturas, bajas temperaturas no congelantes y salinidad; el incremento en dicho ácido regula la adaptación a dichas condiciones, en el caso de las vides reduce el crecimiento vegetativo, estimula la síntesis de polifenoles que resultan en la acumulación de azúcares en las bayas además de incrementar el rendimiento de la planta.
+Berli et al.(2009), afirma adicionalmente qué intensidades altas de luz ultravioleta (asociadas a la altitud) causan daño por oxidación, que reduce el diámetro de las uvas, además de provocar una disminución en el crecimiento de la planta y el rendimiento de la cosecha.
+
+Robinson et al. (2011), encontró en su estudio que el factor principal que afecta la composición volátil y las características sensoriales de un vino es la localización, con diferencias de hasta un 73% a nivel de compuestos orgánicos volátiles. Indica que las principales variables ambientales que afectan la bioquímica de la uva son la composición del suelo, la pendiente, la temperatura y la exposición a la luz.
+
+Arias et al. (2022), menciona que el azúcar en las uvas puede ser indirectamente afectado por el contenido en el agua y el tamaño de las bayas, esto debido a que son los factores climáticos relacionados con la altitud los que influencian un aumento en la concentración de materia seca, producto de pérdidas evaporatorias importantes, los que disminuyen el tamaño y alteran la cantidad de azúcar.
+
+Las especies de frutos en estudio son uvas blancas y rojas, cuyos grados brix ideales fueron referenciados anteriormente. Las localidades en estudio son la Garita, la Guácima y "sanvito", cuya altitud sobre el nivel del mar según el decreto de División Territorial Administrativa de la República de Costa Rica (2017)  es de 693 m, 807 m y 1009 m respectivamente.
+
+La Garita y la Guácima son distritos del cantón central de Alajuela, de modo que poseen variables climáticas similares, según Weather Spark (s.f.) la temperatura del cantón varía entre 18 °C a 29 °C, el cielo se mantiene despejado durante la época seca y se mantiene nublado durante la época lluviosa y la precipitación varía entre 14 mm/h y 161 mm/h. Además, la municipalidad de Alajuela, en su plan de desarrollo  de dicho cantón (2012), indica que la mayor parte del cantón está conformada por relieve plano, con una pendiente menor a 30%.
+
+El distrito de "sanvito" forma parte del cantón de Coto Brus, según Weather Spark (s.f.) la temperatura del distrito varía entre 16 °C y 28 °C, el cielo se mantiene despejado durante la época seca y se mantiene nublado durante la época lluviosa y la precipitación varía entre 25 mm/h y 207 mm/h, además en un radio de 3 km posee cambios muy grandes de altitud con un cambio máximo de 466 m que indica un relieve montañoso quebrado.
+Con base en los datos presentados anteriormente se presenta a continuación el análisis de los datos.
+</div>
+
+
+## Carga de los datos
+
+```{r echo=TRUE}
+df_uvas <- read.csv("https://raw.githubusercontent.com/Andre9424/Proyecto-final-Lab-de-Proba/main/uvas.csv", header = T, sep=";")
+```
+
+## Análisis exploratorio de datos
+
+### Revisión de la estructura del data frame
+
+```{r echo=TRUE}
+str(df_uvas)
+```
+
+<div align="justify">
+Con la función anterior se puede observar que la tabla posee 100 observaciones y cuatro variables ("localidad": Sitio en el que se cultiva la uva, "especie": Color de la uva, "diam": diámetro de la uva y "brix": contenido de azúcar de la uva), la variable "localidad" y "especie" corresponden a variables categóricas, mientras que las variables "diam" y "brix"son numéricas. Esta diferenciación ayudará más adelante con el análisis exploratorio de la base de datos. 
+
+</div>
+
+### Verificación de datos nulos
+
+```{r echo=TRUE}
+porcentaje_nulo <- df_uvas %>%
+  summarise_all(~mean(is.na(.))) * 100
+porcentaje_nulo <- porcentaje_nulo %>%
+  mutate_all(~paste0(., "%"))
+
+print(porcentaje_nulo)
+```
+<div align="justify">
+Mediante la función y el código anterior, se verificó si existían espacios vacíos o nulos en el data frame, y resultó que en cada columna existe un 0% de celdas vacías, así se descarta el sesgo que puede generar esta inconsistencia.
+</div>
+
+### Convertir las variables "character" a factor
+
+```{r echo=TRUE}
+df_uvas$localidad<-as.factor(df_uvas$localidad)
+df_uvas$especie<-as.factor(df_uvas$especie)
+class(df_uvas$localidad);class(df_uvas$especie)
+```
+
+
+### Gráfico de distribución de las variables numéricas
+
+<div align="justify">
+```{r echo=TRUE, warning=FALSE}
+
+ggplot(df_uvas, aes(x=diam)) +
+  geom_histogram(aes(y=..density..), bins=8, fill="#0000CD", alpha=0.7) +
+  geom_density(col="red", size=1) +
+  labs(title="Distribución del Diámetro", x="Diámetro", y="Densidad")
+
+ggplot(df_uvas, aes(x=brix)) +
+  geom_histogram(aes(y=..density..), bins=8, fill="#66CD00", alpha=0.7) +
+  geom_density(col="red", size=1) +
+  labs(title="Distribución del Brix", x="Brix", y="Densidad")
+```
+
+Con base a los gráficos anteriores se puede observar que la variable "diam" del diametro posee una distribución aproximadamente normal, centrada alrededor de 1.2. De igual forma, la variable "brix" correspondiente del contenido de azúcar de la uva, está centrada alrededor de 16.4, y de igual forma posee una distribución aproximadamente normal. 
+</div>
+
+### Gráfico de distribución de las variables categóricas
+
+<div align="justify">
+```{r echo=TRUE, warning=FALSE}
+
+ggplot(df_uvas, aes(x=localidad)) +
+  geom_bar(fill="purple", alpha=0.7) +
+  geom_text(stat='count', aes(label=..count..), vjust=-0.5) +
+  labs(title="Distribución por Localidad", x="Localidad", y="Cantidad") +
+  theme_minimal()
+
+# Gráfico de barras para 'especie' con etiquetas de conteo
+ggplot(df_uvas, aes(x=especie)) +
+  geom_bar(fill="orange", alpha=0.7) +
+  geom_text(stat='count', aes(label=..count..), vjust=-0.5) +
+  labs(title="Distribución por Especie", x="Especie", y="Cantidad") +
+  theme_minimal()
+```
+
+
+Mediante los anteriores gráficos, es posible observar que la mayoría de los registros provienen de la localidad "Garita", seguida de "Guácima" y "SanVito". En cuanto a la especie, la variedad roja es más frecuente que la blanca.
+
+</div>
+
+### Estadísticas del data frame
+
+```{r echo=TRUE}
+summary(df_uvas)
+```
+
+<div align="justify">
+Lo observado en los gráficos se reafirma también al obtener un resumen de las estadísticas de los datos. Como se aprecia en los resultados, el diámetro de las uvas varía entre 0.5 y 1.7, con una media de 1.177 y una mediana de 1.20, esto indica una distribución relativamente centrada alrededor de 1.177. 
+Paralelamente, el contenido de azúcar ("brix") varía entre 13.80 y 19.30, con una media de 16.38 y una mediana de 16.10, es decir, la mayoría de uvas tienen un contenido de azúcar alrededor de 16.38. 
+
+De los cuantiles se puede deducir que 25% de las observaciones tienen un diámetro menor o igual a 1, el 50% tienen un diámetro menor o igual a 1.2 y el 75% tienen un diámetro menor o igual a 1.4. Por otro lado, el 25% de las observaciones tienen un contenido de azúcar menor o igual a 15.30, el 50% tienen un contenido menor o igual a 16.10 y el 75% tienen un contenido menor o igual a 17.30.
+</div>
+
+### Correlación del diámetro con el grado brix
+
+```{r echo=TRUE}
+cor.test(x=df_uvas$diam, y=df_uvas$brix, method = "pearson", digits = 3)
+```
+
+<div align="justify">
+El valor de P es menor a 0.05 indicando que hay evidencia estadística para rechazar la hipótesis nula de que no hay correlación entre el diámetro y el grado brix, a un nivel de significancia de 0.05. Además, el intervalo de confianza del 95% establece que la verdadera correlación está entre -0.08199 y -0.44638. Por lo que hay una correlación débil, pero, a su vez, es estadísticamente significativa, dado que en promedio, a medida que el diámetro aumenta, el contenido de azúcar de la uva disminuye.
+
+</div>
+
+### Gráfico de pares (Combinaciones entre todas las variables)
+
+<div align="justify">
+```{r echo=TRUE, results='hide', message=FALSE, warning=FALSE}
+ggpairs(df_uvas, lower = list(continuous = "smooth"), diag = list(continuous = "bar"), axisLabels = "none")
+```
+
+
+En el gráfico de pares realizado, se muestran distribuciones univariadas en la diagonal, relaciones bivariadas en el parte inferior izquierda y en correlaciones en la parte superior derecha.
+Sobre las distribuciones univariadas, anteriormente se explicaron, sin embargo, en el gráfico se recalca que en una localidad específica se producen más uvas y hay más uvas de un color que de otro. 
+Por otro lado, los diámetros de  las uvas varían, con una tendencia central alrededor de ciertos valores, mientras que el contenido de azúcar también muestra variabilidad. En cuanto a las relaciones bivariadas, la localidad parece tener una influencia en el diámetro y el contenido de azúcar (brix), pues, se observan variaciones en los box plots. La especie también influye en el diámetro y el contenido de azúcar de las uvas, la relación entre el diámetro y el contenido de azúcar es negativa y débilmente significativa, como se mencionó anteriormente, ha medida que aumenta el diámetro, el contenido de azúcar disminuye.
+</div>
+
+### Modelo de regresión lineal
+
+```{r echo=TRUE}
+mod_lineal <- lm(brix ~ ., data = df_uvas) 
+summary(mod_lineal)
+
+```
+<div align="justify">
+Con base al modelo anterior se deduce lo siguiente:
+
+- Cuando todas las variables independientes son cero, el contenido de azúcar (Brix) se estima en 16.4973.
+
+- En comparación con la localidad de referencia (Garita), las uvas de la Guácima tienen un contenido de azúcar promedio 0.7878 unidades menor, manteniendo constantes las otras variables.
+
+- En comparación con la localidad de referencia (Garita), las uvas de "sanvito" tienen un contenido de azúcar promedio 1.0766 unidades menor, manteniendo constantes las otras variables.
+
+- En comparación con la especie de referencia (blanca), las uvas rojas tienen un contenido de azúcar promedio 1.3334 unidades mayor, manteniendo constantes las otras variables.
+
+- El diámetro no tiene una relación significativa con el contenido de azúcar (Brix) en este modelo, ya que su valor p es mayor que 0.05.
+
+- R-squared (R²): El valor de 0.3484 indica que aproximadamente el 34.84% de la variabilidad en el contenido de azúcar (Brix) se explica por las variables independientes en el modelo.
+
+- Adjusted R-squared: El valor ajustado de 0.321 ajusta el R² por el número de variables en el modelo y es un poco más conservador.
+
+- F-statistic: La prueba F es significativa (p < 0.05), lo que indica que el modelo en su conjunto es significativo.
+
+En conclusión con lo que se muestra en el modelo de regresión, las uvas de la Guácima y "sanvito" tienen un contenido de azúcar significativamente menor en comparación con la Garita, las uvas rojas tienen un contenido de azúcar significativamente mayor en comparación con las uvas blancas, no hay una relación significativa entre el diámetro y el contenido de azúcar en este modelo y el modelo explica aproximadamente el 34.84% de la variabilidad en el contenido de azúcar, lo cual es una moderada capacidad explicativa.
+
+Con el resultado anterior se pueden plantear algunas hipótesis con respecto a un problema planteado basado en las variables en donde hay una relación significativa.
+</div>
+
+
+## Planteamiento de las hipótesis
+
+<div align="justify">
+Se desea determinar si la localidad afecta el grado brix en uvas de las especies rojas y blancas y si el efecto es diferente entre una especie y otra.
+
+- Hipótesis principal de la localidad:
+
+La localidad no tiene un efecto significativo sobre el grado Brix en las uvas:
+
+**H0 = µ(Garita) = µ(Guácima) = µ("sanvito")** 
+
+La localidad tiene un efecto significativo sobre el grado Brix en las uvas:
+
+**H1 = Al menos una de las medias de Brix entre las localidades es diferente.**
+
+- Hipótesis principal de la especie:
+
+La especie no tiene un efecto significativo sobre el grado Brix en las uvas:
+
+**H0 = µ(Blanca) = µ(Roja)**
+
+La especie tiene un efecto significativo sobre el grado Brix en las uvas:
+
+**H1 = Las medias de Brix entre las especies son diferentes.**
+
+- Hipótesis de interacción entre localidad y especie:
+
+No hay interacción significativa entre la localidad y la especie en su efecto sobre el grado Brix en las uvas:
+
+**H0 = Efecto(Blanca) = Efecto(Roja)**
+
+Hay una interacción significativa entre la localidad y la especie en su efecto sobre el grado Brix en las uvas:
+
+**H1 = El efecto de la localidad en el grado Brix depende de la especie.**
+
+</div>
+
+## Análisis ANOVA
+<div align="justify">
+Antes de realizar el análisis ANOVA se plantearon las siguientes interrogantes:
+
+¿Cuáles son los factores que se incluyeron en el experimento?
+
+¿Cuántos tratamientos tiene el experimento?
+
+¿En qué aspectos se debe concentrar el análisis?
+
+Los factores que se presentan en este experimento son la especie y la localidad, según el análisis exploratorio de los datos hay 3 localidades pero al haber 2 especies las combinaciones entre localidades y especies dan 6 tratamientos posibles. Los aspectos clave del análisis son el efecto principal de la localidad y la especie y la interacción entre la localidad y la especie.
+</div>
+
+### Cantidad de tratamientos de las uvas
+
+```{r echo=TRUE}
+table(df_uvas$localidad,df_uvas$especie)
+```
+### Creación del modelo ANOVA
+
+Para el modelo se utiliza la forma de interacción Y~X1*X2.
+
+```{r echo=TRUE}
+modelo <- aov(brix ~ localidad * especie, data = df_uvas)
+summary(modelo)
+```
+<div align="justify">
+
+Del análisis anterior se puede observar que hay un efecto significativo de la localidad en el grado Brix de las uvas. Las diferencias entre localidades son lo suficientemente grandes como para ser estadísticamente significativas (p < 0.05). 
+También, Hay un efecto significativo de la especie en el grado Brix de las uvas. Las diferencias entre las especies roja y blanca son estadísticamente significativas (p < 0.05). 
+Por último, hay una interacción significativa entre localidad y especie, lo que significa que el efecto de la localidad en el grado Brix varía según la especie de la uva. 
+Este resultado es importante porque sugiere que no solo los factores individuales afectan el grado Brix, sino también la combinación de ambos.
+
+</div>
+
+### Tabla de efectos
+
+```{r echo=TRUE}
+ef <- model.tables(modelo)
+ef
+```
+<div align="justify">
+
+De los efectos anteriores se tiene lo siguiente:
+
+Efecto de la localidad:
+
+- Las uvas de Garita tienen un efecto positivo sobre el grado Brix (0.5773).
+
+- Las uvas de Guácima y "sanvito" tienen efectos negativos sobre el grado Brix (-0.274 y -0.4077, respectivamente).
+
+Efecto de la especie:
+
+- Las uvas blancas tienen un efecto negativo sobre el grado Brix (-0.8206).
+
+- Las uvas rojas tienen un efecto positivo sobre el grado Brix (0.5703).
+
+Interacción entre la localidad y la especie:
+
+- En la Garita, las uvas blancas tienen un efecto ligeramente negativo sobre el grado Brix (-0.154), mientras que las uvas rojas tienen un efecto ligeramente positivo (0.112).
+
+- En la Guácima, las uvas blancas tienen un efecto positivo significativo sobre el grado Brix (0.660), mientras que las uvas rojas tienen un efecto negativo significativo (-0.609).
+
+- En "sanvito", las uvas blancas tienen un efecto negativo sobre el grado Brix (-0.420), mientras que las uvas rojas tienen un efecto positivo (0.228).
+
+En conclusión, el efecto principal de la localidad se da que las uvas de la Garita tienden a tener un grado Brix mayor en comparación con la Guácima y "sanvito". También se concluye que el efecto de la especie se da en que las uvas rojas tienden a tener un grado Brix mayor que las uvas blancas.
+Por último se concluye que la interacción muestra que el efecto de la localidad en el grado Brix depende de la especie de uva, por ejemplo, en la Guácima, las uvas blancas tienen un efecto significativo sobre el grado Brix, mientras que las uvas rojas tienen un efecto negativo.
+
+</div>
+
+## Gráficos de los efectos
+
+### Efectos principales de localidad
+
+```{r}
+ggplot(df_uvas, aes(x = localidad, y = brix, fill = localidad)) +
+  geom_boxplot() +
+  labs(title = "Efecto de la Localidad en el Contenido de Azúcar (Brix)",
+       x = "Localidad",
+       y = "Brix") +
+  theme_minimal()
+```
+<div align="justify">
+Conclusiones
+
+- Comparación entre Localidades:
+
+Las uvas de Garita tienen el contenido de azúcar más alto en comparación con Guácima y "sanvito". Las uvas de Guácima y "sanvito" tienen un contenido de azúcar similar, pero ambos son menores que Garita.
+
+- Efecto de la Localidad en el Contenido de Azúcar:
+
+La localidad tiene un efecto significativo en el contenido de azúcar (Brix) de las uvas, como se evidenció en el análisis ANOVA y se visualiza en el gráfico de box plot.
+</div>
+
+### Efectos principales de especie
+
+```{r echo=TRUE}
+ggplot(df_uvas, aes(x = especie, y = brix, fill = especie)) +
+  geom_boxplot() +
+  labs(title = "Efecto de la Especie en el Contenido de Azúcar (Brix)",
+       x = "Especie",
+       y = "Brix") +
+  theme_minimal()
+```
+<div align="justify">
+Conclusiones
+
+- Comparación entre Especies:
+
+Las uvas de especie roja tienen un contenido de azúcar más alto en comparación con las uvas de especie blanca.
+La mediana del contenido de azúcar en las uvas rojas es aproximadamente 1.5 unidades Brix mayor que en las uvas blancas.
+
+- Efecto de la Especie en el Contenido de Azúcar:
+
+La especie tiene un efecto significativo en el contenido de azúcar (Brix) de las uvas, como se evidenció en el análisis ANOVA y se visualiza en el gráfico de box plot.
+</div>
+
+### Efectos de interacción entre localidad y grado Brix
+
+```{r echo=TRUE}
+xyplot(brix~localidad,groups=especie, pch=18,type=c("p","a"),auto.key=T, data=df_uvas)
+
+```
+
+<div align="justify">
+Conclusiones
+
+- Efecto de la Localidad y la Especie:
+
+La localidad afecta el contenido de azúcar de las uvas, y este efecto varía según la especie. Las uvas rojas tienden a tener un mayor contenido de azúcar en comparación con las uvas blancas, pero esta diferencia es más pronunciada en algunas localidades (como Garita) que en otras.
+
+- Interacción Significativa:
+
+La interacción entre localidad y especie es significativa, lo que significa que el efecto de la localidad en el contenido de azúcar no es el mismo para ambas especies de uvas.
+Este tipo de interacción es crucial para entender cómo diferentes factores combinados afectan el resultado medido (en este caso, el contenido de azúcar).
+</div>
+
+### Efectos de interacción entre localidad y especie
+
+```{r echo=TRUE}
+xyplot(brix~especie,groups=localidad, pch=18,type=c("p","a"),auto.key=T, data=df_uvas)
+
+```
+<div align="justify">
+Conclusiones
+
+- Efecto de la Especie y la Localidad:
+
+La especie de uva afecta significativamente el contenido de azúcar, pero este efecto varía según la localidad.
+En general, las uvas rojas tienen un mayor contenido de azúcar en comparación con las uvas blancas, pero esta diferencia es más pronunciada en Garita y "sanvito".
+
+- Interacción Significativa:
+
+La interacción entre especie y localidad es significativa, lo que significa que el efecto de la especie en el contenido de azúcar no es el mismo en todas las localidades.
+Esto sugiere que al considerar el contenido de azúcar, es importante tener en cuenta tanto la especie de uva como la localidad de cultivo.
+</div>
+
+## Prueba de comparaciones múltiples
+
+```{r echo=TRUE}
+tk <- TukeyHSD(modelo)
+tk
+```
+
+<div align="justify">
+Conclusiones
+
+- Efecto de la Localidad:
+
+Las uvas de Garita tienen un contenido de azúcar significativamente mayor en comparación con Guácima y "sanvito".
+
+- Efecto de la Especie:
+
+Las uvas rojas tienen un contenido de azúcar significativamente mayor en comparación con las uvas blancas.
+
+- Interacción entre Localidad y Especie:
+
+Hay diferencias significativas en algunas combinaciones de localidad y especie. Por ejemplo:
+"sanvito": blanca tiene un contenido de azúcar significativamente menor que Garita:blanca.
+Garita:roja tiene un contenido de azúcar significativamente mayor que Garita:blanca.
+</div>
+
+## Pruebas de diagnóstico
+
+### Shapiro
+
+```{r echo=TRUE}
+shapiro.test(modelo$residuals)
+```
+
+<div align="justify">
+En este caso, el valor p es 0.2406, que es mayor que 0.05. Esto significa que no hay suficiente evidencia para rechazar la hipótesis nula. Por lo tanto, podemos concluir que los residuos del modelo no se desvían significativamente de una distribución normal.
+La normalidad de los residuos es uno de los supuestos del análisis de varianza (ANOVA). Dado que los residuos son aproximadamente normales, este supuesto del modelo ANOVA se cumple.
+</div>
+
+### Gráfico de los residuales
+
+```{r echo=TRUE}
+qqPlot(modelo$residuals,
+       main = "Q-Q Plot de los Residuos del Modelo",
+       ylab = "Residuos",
+       xlab = "Cuantiles Teóricos")
+```
+<div align="justify">
+El gráfico Q-Q plot sugiere que los residuos del modelo siguen una distribución aproximadamente normal. La mayoría de los puntos se alinean a lo largo de la línea diagonal y están dentro de las bandas de confianza, confirmando el resultado del test de Shapiro.
+</div>
+
+### Bartlett
+
+```{r echo=TRUE}
+bartlett.test(brix ~ localidad, data = df_uvas)
+bartlett.test(brix ~ especie, data = df_uvas)
+```
+
+<div align="justify">
+Para la localidad: 
+
+El valor p es 0.2373, que es mayor que el nivel de significancia típico (α=0.05). Por lo tanto, no se puede rechazar la hipótesis nula. Esto indica que no hay evidencia suficiente para afirmar que las varianzas son diferentes entre las localidades.
+
+Para la especie:
+
+El valor p es 0.4557, que es mayor que el nivel de significancia típico (α=0.05). Por lo tanto, no se puede rechazar la hipótesis nula. Esto indica que no hay evidencia suficiente para afirmar que las varianzas son diferentes entre las especies.
+
+Tanto para localidad como para especie, no hay evidencia suficiente para afirmar que las varianzas del contenido de azúcar (Brix) son diferentes entre los grupos. Esto sugiere que se cumple el supuesto de homogeneidad de varianza en el análisis ANOVA.
+</div>
+
+# Conclusiones
+
+<div align="justify">
+- Las localidades tienen un efecto significativo en el contenido de azúcar de las uvas. Específicamente, las uvas de Garita tienen un contenido de azúcar significativamente mayor en comparación con Guácima y "sanvito".
+
+- Las especies de uvas también afectan significativamente el contenido de azúcar. Las uvas rojas tienen un contenido de azúcar significativamente mayor que las uvas blancas.
+
+- Existe una interacción significativa entre localidad y especie, indicando que el efecto de la localidad en el contenido de azúcar depende de la especie de uva.
+
+- El CME es igual a 1.21, es relativamente bajo, lo que indica que la variabilidad dentro de los grupos es pequeña comparada con la variabilidad total.
+
+- La alta significancia de los CMTrat (localidad: 10.35, especie: 47.30 e interacción: 7.13) en comparación con el CME indica que las diferencias entre los grupos son significativas y altas.
+
+- Dado que los residuos del modelo son aproximadamente normales (como se verificó con el test de Shapiro-Wilk y el Q-Q plot) y que no hay evidencia de heterocedasticidad (como se verificó con el test de Bartlett), se puede considerar que los supuestos del ANOVA se cumplen. Esto respalda la validez de los resultados del análisis ANOVA y las pruebas de realizadas.
+</div>
+
+# Bibliografía
+
+<div align="justify">
+>
+Arias, L. A., Berli, F., Fontana, A., Bottini, R., & Piccoli, P. (2022). *Climate change effects on grapevine physiology and biochemistry: Benefits and challenges of high altitude as an adaptation strategy. Frontiers in Plant Science*, 13, 835425. https://www.frontiersin.org/journals/plant-science/articles/10.3389/fpls.2022.835425/full 
+>
+Berli, F. J., Moreno, D., Piccoli, P., Hespanhol-Viana, L., Silva, M. F., Bressan-Smith, R., et al. (2009). *Abscisic acid is involved in the response of grape (Vitis vinifera L.) cv. Malbec leaf tissues to ultraviolet-B radiation by enhancing ultraviolet-absorbing compounds, antioxidant enzymes and membrane sterols. Plant Cell Environ.* 33, 1–10.https://doi.org/10.1111/j.1365-3040.2009.02044.x
+>
+Costa Rica. Leyes, decretos, etc.(2017) *División territorial administrativa de la República de Costa Rica*. Vinicio Piedra Quesada. Primera edición. San José, Costa Rica : Imprenta Nacional. https://www.imprentanacional.go.cr/editorialdigital/libros/historiaygeografia/division_17.pdf
+>
+Food and Agriculture Organization (FAO).(2007) *Norma para las uvas de mesa*. CODEX STAN 255. https://www.fao.org/fao-who-codexalimentarius/sh-proxy/en/?lnk=1&url=https%253A%252F%252Fworkspace.fao.org%252Fsites%252Fcodex%252FStandards%252FCXS%2B255-2007%252FCXS_255s.pdf
+>
+Robinson, A. L., Boss, P. K., Heymann, H., Solomon, P. S., and Trengove, R. D. (2011). *Influence of yeast strain, canopy management, and site on the volatile composition and sensory attributes of Cabernet Sauvignon wines from Western Australia. J. Agric. Food Chem.* 59, 3273–3284.https://doi.org/10.1021/jf104324d
+>
+Meier, G., INTA Concoria (2023). *Con las copas llenas*.Pampero TV. https://www.youtube.com/watch?v=3KsprKxcYrw
+>
+Municipalidad de Alajuela (2012). *Plan de Desarrollo Cantón de Alajuela: Informe final*. https://www.munialajuela.go.cr/cms/api/File/DownloadFile/OtherFiles/Plan_Desarrollo_Cantonal2013-2023_17-06-2019_14_47_19.pdf
+>
+Weather Spark (s.f.) *El clima y el tiempo promedio en todo el año en Alajuela*. https://es.weatherspark.com/y/15529/Clima-promedio-en-Alajuela-Costa-Rica-durante-todo-el-a%C3%B1o
+>
+Weather Spark (s.f.) *El clima y el tiempo promedio en todo el año en San Vito*. https://es.weatherspark.com/y/16649/Clima-promedio-en-San-Vito-Costa-Rica-durante-todo-el-a%C3%B1o
+
+</div>
+
+**Repositorio para consulta y descarga de datos:** [Aquí](https://github.com/Andre9424/Proyecto-final-Lab-de-Proba)
+
+
